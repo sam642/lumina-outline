@@ -59,7 +59,7 @@ GATEWAY=""
 IP="dhcp"
 STORAGE="local-lvm"
 TEMPLATE_STORAGE="local"
-TEMPLATE="debian-12-standard_12.0-1_amd64.tar.zst"
+TEMPLATE_SEARCH="debian-13"
 
 header_info
 echo -e "\nThis script will create a new Lumina Outline LXC container.\n"
@@ -99,16 +99,16 @@ fi
 msg_info "Updating Proxmox template list..."
 pveam update
 
-# Find the latest Debian 12 template
-msg_info "Searching for available Debian 12 templates..."
-# Try to find debian-12-standard first, then any debian-12
-LATEST_TEMPLATE=$(pveam available | grep "debian-12-standard" | sort -V | tail -n 1 | awk '{print $2}')
+# Find the latest Debian template
+msg_info "Searching for available $TEMPLATE_SEARCH templates..."
+# Try to find standard first, then any match
+LATEST_TEMPLATE=$(pveam available | grep "$TEMPLATE_SEARCH-standard" | sort -V | tail -n 1 | awk '{print $2}')
 if [ -z "$LATEST_TEMPLATE" ]; then
-  LATEST_TEMPLATE=$(pveam available | grep "debian-12" | sort -V | tail -n 1 | awk '{print $2}')
+  LATEST_TEMPLATE=$(pveam available | grep "$TEMPLATE_SEARCH" | sort -V | tail -n 1 | awk '{print $2}')
 fi
 
 if [ -z "$LATEST_TEMPLATE" ]; then
-  msg_error "Could not find any Debian 12 template in the Proxmox repository."
+  msg_error "Could not find any $TEMPLATE_SEARCH template in the Proxmox repository."
   echo "Available system templates:"
   pveam available -section system | grep "debian"
   exit 1
@@ -129,13 +129,13 @@ msg_info "Using disk size: ${DISK_SIZE_NUM}G"
 
 # Create the container
 msg_info "Provisioning LXC..."
-# Using explicit rootfs syntax for better compatibility
+# Using the most compatible storage:size syntax
 pct create "$CTID" "$TEMPLATE_STORAGE:vztmpl/$LATEST_TEMPLATE" \
   --hostname "$HOSTNAME" \
   --cores "$CORES" \
   --memory "$RAM" \
   --net0 name=eth0,bridge="$BRIDGE",ip="$IP${GATEWAY:+,gw=$GATEWAY}" \
-  --rootfs "volume=$STORAGE:${DISK_SIZE_NUM}G" \
+  --rootfs "$STORAGE:$DISK_SIZE_NUM" \
   --onboot 1 \
   --unprivileged 1 \
   --features nesting=1
