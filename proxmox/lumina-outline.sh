@@ -110,7 +110,7 @@ apt-get install -y nodejs &>/dev/null
 mkdir -p /opt/lumina-outline
 cd /opt/lumina-outline
 # REPLACE_REPO_URL_HERE
-git clone https://github.com/USER/lumina-outline.git . &>/dev/null
+git clone https://github.com/sam642/lumina-outline.git . &>/dev/null
 npm install &>/dev/null
 npm run build &>/dev/null
 cat <<EOT > /etc/systemd/system/lumina-outline.service
