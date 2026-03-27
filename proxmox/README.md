@@ -1,30 +1,26 @@
 # Proxmox LXC Deployment for Lumina Outline
 
-This directory contains scripts to deploy the Lumina Outline application as a Proxmox LXC container.
+This directory contains scripts to deploy the Lumina Outline application as a Proxmox LXC container, following the style of [community-scripts.org](https://community-scripts.org).
 
-## Host-Side Script (`lxc_create.sh`)
+## Host-Side Script (`lumina-outline.sh`)
 
-This script is designed to be run on your Proxmox host. It will:
-1.  Create a new Debian 12 LXC container.
-2.  Install Node.js 20 and other dependencies inside the container.
-3.  Clone the repository and build the application.
-4.  Set up a `systemd` service to keep the application running.
+This is the main script designed to be run on your Proxmox host. It provides a guided installation experience with ASCII art, color-coded messages, and prompts for configuration.
 
 ### Usage
 
-1.  Copy `lxc_create.sh` to your Proxmox host.
+1.  Copy `lumina-outline.sh` to your Proxmox host.
 2.  Edit the `REPO_URL` variable in the script to point to your repository.
-3.  Make the script executable: `chmod +x lxc_create.sh`.
-4.  Run the script: `./lxc_create.sh`.
+3.  Make the script executable: `chmod +x lumina-outline.sh`.
+4.  Run the script: `./lumina-outline.sh`.
 
-## Container-Side Script (`install.sh`)
+## Container-Side Script (`build.sh`)
 
-If you already have a Debian-based LXC container and want to install the application manually:
+This script is used internally by `lumina-outline.sh` to handle the installation inside the LXC container. It can also be run manually inside a Debian-based LXC.
 
-1.  Copy `install.sh` into your container.
+1.  Copy `build.sh` into your container.
 2.  Edit the `REPO_URL` variable in the script.
-3.  Make the script executable: `chmod +x install.sh`.
-4.  Run the script: `./install.sh`.
+3.  Make the script executable: `chmod +x build.sh`.
+4.  Run the script: `./build.sh`.
 
 ## Production Server
 
