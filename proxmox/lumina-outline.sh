@@ -91,34 +91,41 @@ fi
 
 # Update Proxmox template list
 msg_info "Updating Proxmox template list..."
-pveam update &>/dev/null
+pveam update
 
 # Find the latest Debian 12 template
-msg_info "Searching for latest Debian 12 template..."
-LATEST_TEMPLATE=$(pveam available -section system | grep "debian-12" | sort -V | tail -n 1 | awk '{print $2}')
+msg_info "Searching for available Debian 12 templates..."
+# Try to find debian-12-standard first, then any debian-12
+LATEST_TEMPLATE=$(pveam available | grep "debian-12-standard" | sort -V | tail -n 1 | awk '{print $2}')
+if [ -z "$LATEST_TEMPLATE" ]; then
+  LATEST_TEMPLATE=$(pveam available | grep "debian-12" | sort -V | tail -n 1 | awk '{print $2}')
+fi
 
 if [ -z "$LATEST_TEMPLATE" ]; then
-  msg_error "Could not find a Debian 12 template in the Proxmox repository."
+  msg_error "Could not find any Debian 12 template in the Proxmox repository."
+  echo "Available system templates:"
+  pveam available -section system | grep "debian"
   exit 1
 fi
 
-TEMPLATE_FILENAME=$(basename $LATEST_TEMPLATE)
-msg_info "Using template: $TEMPLATE_FILENAME"
+TEMPLATE_FILENAME=$(basename "$LATEST_TEMPLATE")
+msg_info "Found template: $LATEST_TEMPLATE"
 
 # Download template if not exists
-if ! pveam list $TEMPLATE_STORAGE | grep -q "$TEMPLATE_FILENAME"; then
-  msg_info "Downloading $TEMPLATE_FILENAME..."
-  pveam download $TEMPLATE_STORAGE "$LATEST_TEMPLATE"
+if ! pveam list "$TEMPLATE_STORAGE" | grep -q "$TEMPLATE_FILENAME"; then
+  msg_info "Downloading $LATEST_TEMPLATE to $TEMPLATE_STORAGE..."
+  pveam download "$TEMPLATE_STORAGE" "$LATEST_TEMPLATE"
 fi
 
 # Create the container
 msg_info "Provisioning LXC..."
-pct create $CTID "$TEMPLATE_STORAGE:vztmpl/$TEMPLATE_FILENAME" \
-  --hostname $HOSTNAME \
-  --cores $CORES \
-  --memory $RAM \
-  --net0 name=eth0,bridge=$BRIDGE,ip=$IP${GATEWAY:+,gw=$GATEWAY} \
-  --rootfs $STORAGE:$DISK_SIZE \
+# Ensure we use the full path for the template
+pct create "$CTID" "$TEMPLATE_STORAGE:vztmpl/$LATEST_TEMPLATE" \
+  --hostname "$HOSTNAME" \
+  --cores "$CORES" \
+  --memory "$RAM" \
+  --net0 name=eth0,bridge="$BRIDGE",ip="$IP${GATEWAY:+,gw=$GATEWAY}" \
+  --rootfs "$STORAGE:$DISK_SIZE" \
   --onboot 1 \
   --unprivileged 1 \
   --features nesting=1
