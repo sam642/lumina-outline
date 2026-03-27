@@ -117,6 +117,10 @@ if ! pveam list "$TEMPLATE_STORAGE" | grep -q "$TEMPLATE_FILENAME"; then
   pveam download "$TEMPLATE_STORAGE" "$LATEST_TEMPLATE"
 fi
 
+# Clean disk size (remove G/M suffixes to ensure compatibility)
+DISK_SIZE_NUM=$(echo $DISK_SIZE | sed 's/[GgMm]//g')
+msg_info "Using disk size: ${DISK_SIZE_NUM}G"
+
 # Create the container
 msg_info "Provisioning LXC..."
 # Ensure we use the full path for the template
@@ -125,7 +129,7 @@ pct create "$CTID" "$TEMPLATE_STORAGE:vztmpl/$LATEST_TEMPLATE" \
   --cores "$CORES" \
   --memory "$RAM" \
   --net0 name=eth0,bridge="$BRIDGE",ip="$IP${GATEWAY:+,gw=$GATEWAY}" \
-  --rootfs "$STORAGE:$DISK_SIZE" \
+  --rootfs "$STORAGE:$DISK_SIZE_NUM" \
   --onboot 1 \
   --unprivileged 1 \
   --features nesting=1
