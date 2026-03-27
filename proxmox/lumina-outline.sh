@@ -89,16 +89,31 @@ if ! pvesm status -storage $TEMPLATE_STORAGE &>/dev/null; then
   exit 1
 fi
 
-# Download Debian 12 template if not exists
-if ! pveam list $TEMPLATE_STORAGE | grep -q $TEMPLATE; then
-  msg_info "Downloading Debian 12 template..."
-  pveam update
-  pveam download $TEMPLATE_STORAGE $TEMPLATE
+# Update Proxmox template list
+msg_info "Updating Proxmox template list..."
+pveam update &>/dev/null
+
+# Find the latest Debian 12 template
+msg_info "Searching for latest Debian 12 template..."
+LATEST_TEMPLATE=$(pveam available -section system | grep "debian-12" | sort -V | tail -n 1 | awk '{print $2}')
+
+if [ -z "$LATEST_TEMPLATE" ]; then
+  msg_error "Could not find a Debian 12 template in the Proxmox repository."
+  exit 1
+fi
+
+TEMPLATE_FILENAME=$(basename $LATEST_TEMPLATE)
+msg_info "Using template: $TEMPLATE_FILENAME"
+
+# Download template if not exists
+if ! pveam list $TEMPLATE_STORAGE | grep -q "$TEMPLATE_FILENAME"; then
+  msg_info "Downloading $TEMPLATE_FILENAME..."
+  pveam download $TEMPLATE_STORAGE "$LATEST_TEMPLATE"
 fi
 
 # Create the container
 msg_info "Provisioning LXC..."
-pct create $CTID $TEMPLATE_STORAGE:vztmpl/$TEMPLATE \
+pct create $CTID "$TEMPLATE_STORAGE:vztmpl/$TEMPLATE_FILENAME" \
   --hostname $HOSTNAME \
   --cores $CORES \
   --memory $RAM \
