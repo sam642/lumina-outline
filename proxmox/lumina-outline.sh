@@ -21,6 +21,15 @@ function msg_error() {
   echo -e "\e[31m[ERROR]\e[0m ${msg}"
 }
 
+function error_handler() {
+  local exit_code="$?"
+  local line_number="$1"
+  if [ "$exit_code" -ne 0 ]; then
+    msg_error "An error occurred on line $line_number. Exit code: $exit_code"
+  fi
+}
+trap 'error_handler $LINENO' EXIT
+
 function header_info() {
   clear
   cat <<EOF
@@ -69,11 +78,22 @@ fi
 
 msg_info "Creating Lumina Outline LXC Container (ID: $CTID)..."
 
+# Check if storage pools exist
+if ! pvesm status -storage $STORAGE &>/dev/null; then
+  msg_error "Storage pool '$STORAGE' not found. Please check your settings."
+  exit 1
+fi
+
+if ! pvesm status -storage $TEMPLATE_STORAGE &>/dev/null; then
+  msg_error "Template storage pool '$TEMPLATE_STORAGE' not found. Please check your settings."
+  exit 1
+fi
+
 # Download Debian 12 template if not exists
 if ! pveam list $TEMPLATE_STORAGE | grep -q $TEMPLATE; then
   msg_info "Downloading Debian 12 template..."
-  pveam update &>/dev/null
-  pveam download $TEMPLATE_STORAGE $TEMPLATE &>/dev/null
+  pveam update
+  pveam download $TEMPLATE_STORAGE $TEMPLATE
 fi
 
 # Create the container
@@ -86,11 +106,11 @@ pct create $CTID $TEMPLATE_STORAGE:vztmpl/$TEMPLATE \
   --rootfs $STORAGE:$DISK_SIZE \
   --onboot 1 \
   --unprivileged 1 \
-  --features nesting=1 &>/dev/null
+  --features nesting=1
 
 # Start the container
 msg_info "Starting LXC..."
-pct start $CTID &>/dev/null
+pct start $CTID
 
 msg_info "Waiting for network..."
 sleep 5
@@ -103,16 +123,30 @@ msg_info "Running installation inside container..."
 pct exec $CTID -- bash -c "cat <<'EOF' > /tmp/build.sh
 #!/usr/bin/env bash
 set -e
+
+function msg_info() {
+  echo -e \"\e[34m[INFO]\e[0m \$1\"
+}
+
+msg_info \"Updating system...\"
 apt-get update &>/dev/null
+apt-get -y upgrade &>/dev/null
+
+msg_info \"Installing dependencies...\"
 apt-get install -y curl git build-essential sudo &>/dev/null
+
+msg_info \"Installing Node.js 20...\"
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &>/dev/null
 apt-get install -y nodejs &>/dev/null
+
+msg_info \"Setting up application...\"
 mkdir -p /opt/lumina-outline
 cd /opt/lumina-outline
-# REPLACE_REPO_URL_HERE
 git clone https://github.com/sam642/lumina-outline.git . &>/dev/null
 npm install &>/dev/null
 npm run build &>/dev/null
+
+msg_info \"Configuring service...\"
 cat <<EOT > /etc/systemd/system/lumina-outline.service
 [Unit]
 Description=Lumina Outline Service
@@ -130,6 +164,7 @@ Environment=PORT=3000
 [Install]
 WantedBy=multi-user.target
 EOT
+
 systemctl daemon-reload
 systemctl enable --now lumina-outline &>/dev/null
 EOF"
@@ -137,4 +172,5 @@ EOF"
 pct exec $CTID -- bash /tmp/build.sh
 
 msg_ok "Lumina Outline is now running at http://$(pct exec $CTID -- hostname -I | awk '{print $1}'):3000"
+trap - EXIT
 echo -e "\n\e[32mInstallation Successful!\e[0m\n"

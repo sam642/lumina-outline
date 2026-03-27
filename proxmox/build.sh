@@ -35,13 +35,12 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &>/dev/null
 apt-get install -y nodejs &>/dev/null
 msg_ok "Node.js $(node -v) installed"
 
-msg_info "Setting up Lumina Outline..."
+msg_info "Setting up application..."
 mkdir -p /opt/lumina-outline
 cd /opt/lumina-outline
 
-# Clone the repository (User should replace this with their actual repo URL)
-# For now, we'll assume the user will provide the source or we'll use a placeholder.
-REPO_URL="https://github.com/USER/lumina-outline.git"
+# Clone the repository
+REPO_URL="https://github.com/sam642/lumina-outline.git"
 
 if [ ! -d ".git" ]; then
   msg_info "Cloning repository..."
