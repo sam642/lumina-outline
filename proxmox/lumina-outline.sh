@@ -5,6 +5,12 @@
 
 set -e
 
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then
+  echo -e "\e[31m[ERROR]\e[0m This script must be run as root (use sudo)."
+  exit 1
+fi
+
 # Helper functions for colored output
 function msg_info() {
   local msg="$1"
@@ -123,13 +129,13 @@ msg_info "Using disk size: ${DISK_SIZE_NUM}G"
 
 # Create the container
 msg_info "Provisioning LXC..."
-# Ensure we use the full path for the template
+# Using explicit rootfs syntax for better compatibility
 pct create "$CTID" "$TEMPLATE_STORAGE:vztmpl/$LATEST_TEMPLATE" \
   --hostname "$HOSTNAME" \
   --cores "$CORES" \
   --memory "$RAM" \
   --net0 name=eth0,bridge="$BRIDGE",ip="$IP${GATEWAY:+,gw=$GATEWAY}" \
-  --rootfs "$STORAGE:$DISK_SIZE_NUM" \
+  --rootfs "volume=$STORAGE:${DISK_SIZE_NUM}G" \
   --onboot 1 \
   --unprivileged 1 \
   --features nesting=1
