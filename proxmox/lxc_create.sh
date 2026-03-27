@@ -56,7 +56,7 @@ pct exec $CTID -- bash -c "apt-get install -y nodejs"
 
 # Clone the repository (User should replace this with their actual repo URL)
 # For now, we'll assume the user will provide the source or we'll use a placeholder.
-REPO_URL="https://github.com/USER/lumina-outline.git"
+REPO_URL="https://github.com/sam642/lumina-outline.git"
 
 pct exec $CTID -- bash -c "git clone $REPO_URL /opt/lumina-outline"
 pct exec $CTID -- bash -c "cd /opt/lumina-outline && npm install && npm run build"
