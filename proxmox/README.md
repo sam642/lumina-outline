@@ -1,17 +1,17 @@
-# Proxmox LXC Deployment for Lumina Outline
+# Proxmox LXC Deployment for nxliner
 
-This directory contains scripts to deploy the Lumina Outline application as a Proxmox LXC container, following the style of [community-scripts.org](https://community-scripts.org).
+This directory contains scripts to deploy the nxliner application as a Proxmox LXC container, following the style of [community-scripts.org](https://community-scripts.org).
 
-## Host-Side Script (`lumina-outline.sh`)
+## Host-Side Script (`nxliner.sh`)
 
 This is the main script designed to be run on your Proxmox host. It provides a guided installation experience with ASCII art, color-coded messages, and prompts for configuration.
 
 ### Usage
 
-1.  Copy `lumina-outline.sh` to your Proxmox host.
+1.  Copy `nxliner.sh` to your Proxmox host.
 2.  Edit the `REPO_URL` variable in the script to point to your repository.
-3.  Make the script executable: `chmod +x lumina-outline.sh`.
-4.  Run the script: `./lumina-outline.sh`.
+3.  Make the script executable: `chmod +x nxliner.sh`.
+4.  Run the script: `./nxliner.sh`.
 
 ## Container-Side Script (`build.sh`)
 

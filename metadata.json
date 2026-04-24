@@ -1,5 +1,8 @@
 {
-  "name": "Lumina Outline",
-  "description": "A powerful, hierarchical outliner for organizing thoughts and projects, inspired by Dynalist.",
-  "requestFramePermissions": []
+  "name": "nxliner",
+  "description": "A high-performance, keyboard-centric hierarchical outliner for power users, inspired by Checkvist.",
+  "requestFramePermissions": [
+    "clipboard-read",
+    "clipboard-write"
+  ]
 }

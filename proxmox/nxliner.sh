@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Proxmox LXC Creation Script for Lumina Outline
+# Proxmox LXC Creation Script for nxliner
 # Inspired by Proxmox Helper Scripts (community-scripts.org)
 
 set -e
@@ -39,18 +39,18 @@ trap 'error_handler $LINENO' EXIT
 function header_info() {
   clear
   cat <<EOF
-    __                      _                 ____        __  ___            
-   / /   __  ______ ___  (_)___  ____ _    / __ \__  __/ /_/ (_)___  ___ 
-  / /   / / / / __ '__ \/ / __ \/ __ '/   / / / / / / / __/ / / __ \/ _ \\
- / /___/ /_/ / / / / / / / / / / /_/ /   / /_/ / /_/ / /_/ / / / / /  __/
-/_____/\__,_/_/ /_/ /_/_/_/ /_/\__,_/    \____/\__,_/\__/_/_/_/ /_/\___/ 
-                                                                         
+    _   ___  ___    _____  _  _______ 
+   / | / / |/ / |  / / / |/ / / ____/ 
+  /  |/ /|   /| | / / /|   / / __/    
+ / /|  //   | | |/ / /|   / / /___    
+/_/ |_//_/|_| |___/_/ |_/_/_____/    
+                                      
 EOF
 }
 
 # Default settings
 CTID=$(pvesh get /cluster/nextid)
-HOSTNAME="lumina-outline"
+HOSTNAME="nxliner"
 DISK_SIZE="8G"
 CORES="1"
 RAM="512"
@@ -62,7 +62,7 @@ TEMPLATE_STORAGE="local"
 TEMPLATE_SEARCH="debian-13"
 
 header_info
-echo -e "\nThis script will create a new Lumina Outline LXC container.\n"
+echo -e "\nThis script will create a new nxliner LXC container.\n"
 
 # Prompt for settings
 read -p "Use default settings? (y/n): " -n 1 -r
@@ -82,7 +82,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
   STORAGE=${input_storage:-$STORAGE}
 fi
 
-msg_info "Creating Lumina Outline LXC Container (ID: $CTID)..."
+msg_info "Creating nxliner LXC Container (ID: $CTID)..."
 
 # Check if storage pools exist
 if ! pvesm status -storage $STORAGE &>/dev/null; then
@@ -172,22 +172,22 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | bash - &>/dev/null
 apt-get install -y nodejs &>/dev/null
 
 msg_info \"Setting up application...\"
-mkdir -p /opt/lumina-outline
-cd /opt/lumina-outline
-git clone https://github.com/sam642/lumina-outline.git . &>/dev/null
+mkdir -p /opt/nxliner
+cd /opt/nxliner
+git clone https://github.com/sam642/nxliner.git . &>/dev/null || git clone https://github.com/sam642/lumina-outline.git . &>/dev/null
 npm install &>/dev/null
 npm run build &>/dev/null
 
 msg_info \"Configuring service...\"
-cat <<EOT > /etc/systemd/system/lumina-outline.service
+cat <<EOT > /etc/systemd/system/nxliner.service
 [Unit]
-Description=Lumina Outline Service
+Description=nxliner Service
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/lumina-outline
+WorkingDirectory=/opt/nxliner
 ExecStart=/usr/bin/npm start
 Restart=always
 Environment=NODE_ENV=production
@@ -198,11 +198,11 @@ WantedBy=multi-user.target
 EOT
 
 systemctl daemon-reload
-systemctl enable --now lumina-outline &>/dev/null
+systemctl enable --now nxliner &>/dev/null
 EOF"
 
 pct exec $CTID -- bash /tmp/build.sh
 
-msg_ok "Lumina Outline is now running at http://$(pct exec $CTID -- hostname -I | awk '{print $1}'):3000"
+msg_ok "nxliner is now running at http://$(pct exec $CTID -- hostname -I | awk '{print $1}'):3000"
 trap - EXIT
 echo -e "\n\e[32mInstallation Successful!\e[0m\n"
